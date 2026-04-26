@@ -1,0 +1,390 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en">
+
+
+<head>
+
+
+<meta charset="UTF-8">
+
+
+<title>RECSOV - Reclaimed Sovereignty</title>
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+
+
+<style>
+
+
+body {
+
+
+    margin: 0;
+
+
+    font-family: Arial, sans-serif;
+
+
+    background: #0b0b0f;
+
+
+    color: white;
+
+
+}
+
+
+header {
+
+
+    text-align: center;
+
+
+    padding: 50px;
+
+
+}
+
+
+h1 {
+
+
+    font-size: 52px;
+
+
+    color: gold;
+
+
+}
+
+
+button {
+
+
+    padding: 12px 20px;
+
+
+    background: gold;
+
+
+    border: none;
+
+
+    cursor: pointer;
+
+
+    margin: 10px;
+
+
+    border-radius: 5px;
+
+
+}
+
+
+.section {
+
+
+    padding: 40px;
+
+
+    text-align: center;
+
+
+}
+
+
+.grid {
+
+
+    display: flex;
+
+
+    flex-wrap: wrap;
+
+
+    justify-content: center;
+
+
+}
+
+
+.card {
+
+
+    background: #14141a;
+
+
+    padding: 20px;
+
+
+    margin: 15px;
+
+
+    width: 300px;
+
+
+    border-radius: 10px;
+
+
+}
+
+
+input {
+
+
+    padding: 10px;
+
+
+    width: 80%;
+
+
+    margin: 10px;
+
+
+}
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+<header>
+
+
+    <h1>RECSOV</h1>
+
+
+    <p>Reclaimed Sovereignty</p>
+
+
+    <button onclick="connectWallet()">Connect Wallet</button>
+
+
+    <p id="wallet"></p>
+
+
+    <p>Balance: <span id="balance">0</span> RECSOV</p>
+
+
+</header>
+
+
+<div class="section">
+
+
+    <h2>Buy RECSOV</h2>
+
+
+    <button onclick="buy()">Buy on Uniswap</button>
+
+
+</div>
+
+
+<div class="section">
+
+
+    <h2>Reserve</h2>
+
+
+    <p>Backing: <span id="reserve">0</span> ETH</p>
+
+
+</div>
+
+
+<div class="section grid">
+
+
+    <div class="card">
+
+
+        <h3>Claim Tokens</h3>
+
+
+        <button onclick="claim()">Claim</button>
+
+
+    </div>
+
+
+    <div class="card">
+
+
+        <h3>Stake Tokens</h3>
+
+
+        <input id="stakeAmount" placeholder="Amount">
+
+
+        <button onclick="stake()">Stake</button>
+
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+let provider, signer, user;
+
+
+const tokenAddress = "YOUR_TOKEN_ADDRESS";
+
+
+const stakingAddress = "YOUR_STAKING_ADDRESS";
+
+
+const faucetAddress = "YOUR_FAUCET_ADDRESS";
+
+
+const reserveAddress = "YOUR_RESERVE_ADDRESS";
+
+
+// Minimal ABI
+
+
+const tokenABI = [
+
+
+    "function balanceOf(address) view returns (uint256)"
+
+
+];
+
+
+const reserveABI = [
+
+
+    "function getReserveBalance() view returns (uint256)"
+
+
+];
+
+
+async function connectWallet() {
+
+
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+
+
+    await provider.send("eth_requestAccounts", []);
+
+
+    signer = provider.getSigner();
+
+
+    user = await signer.getAddress();
+
+
+    document.getElementById("wallet").innerText = user;
+
+
+    loadBalance();
+
+
+    loadReserve();
+
+
+}
+
+
+async function loadBalance() {
+
+
+    const contract = new ethers.Contract(tokenAddress, tokenABI, provider);
+
+
+    const bal = await contract.balanceOf(user);
+
+
+    document.getElementById("balance").innerText = ethers.utils.formatEther(bal);
+
+
+}
+
+
+async function loadReserve() {
+
+
+    const contract = new ethers.Contract(reserveAddress, reserveABI, provider);
+
+
+    const res = await contract.getReserveBalance();
+
+
+    document.getElementById("reserve").innerText = ethers.utils.formatEther(res);
+
+
+}
+
+
+async function claim() {
+
+
+    const abi = ["function claim()"];
+
+
+    const contract = new ethers.Contract(faucetAddress, abi, signer);
+
+
+    await contract.claim();
+
+
+}
+
+
+async function stake() {
+
+
+    const amount = document.getElementById("stakeAmount").value;
+
+
+    const abi = ["function stake(uint256)"];
+
+
+    const contract = new ethers.Contract(stakingAddress, abi, signer);
+
+
+    const parsed = ethers.utils.parseEther(amount);
+
+
+    await contract.stake(parsed);
+
+
+}
+
+
+function buy() {
+
+
+    window.open("https://app.uniswap.org/#/swap?outputCurrency=" + tokenAddress);
+
+
+}
+
+
+</script>
+
+
+</body>
+
+
+</html>
