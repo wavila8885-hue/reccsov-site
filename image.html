@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RECSOV</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b0b0f;
+    color: white;
+    text-align: center;
+}
+
+h1 {
+    color: gold;
+    margin-top: 40px;
+}
+
+button {
+    padding: 12px 20px;
+    background: gold;
+    border: none;
+    margin: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.card {
+    background: #14141a;
+    margin: 20px auto;
+    padding: 20px;
+    width: 300px;
+    border-radius: 10px;
+}
+
+input {
+    padding: 10px;
+    width: 80%;
+}
+</style>
+</head>
+
+<body>
+
+<h1>RECSOV</h1>
+<p>Reclaimed Sovereignty</p>
+
+<button onclick="connectWallet()">Connect Wallet</button>
+<p id="wallet">Not connected</p>
+
+<div class="card">
+    <h3>Balance</h3>
+    <p id="balance">0</p>
+</div>
+
+<div class="card">
+    <h3>Claim</h3>
+    <button onclick="claim()">Claim Tokens</button>
+</div>
+
+<div class="card">
+    <h3>Stake</h3>
+    <input id="amount" placeholder="Amount">
+    <button onclick="stake()">Stake</button>
+</div>
+
+<div class="card">
+    <h3>Buy</h3>
+    <button onclick="buy()">Buy on Uniswap</button>
+</div>
+
+<script>
+let provider;
+let signer;
+let user;
+
+const tokenAddress = "";
+const stakingAddress = "";
+const faucetAddress = "";
+
+// Basic ABI
+const tokenABI = [
+    "function balanceOf(address) view returns (uint256)"
+];
+
+async function connectWallet() {
+    if (!window.ethereum) {
+        alert("Please install MetaMask");
+        return;
+    }
+
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    signer = provider.getSigner();
+    user = await signer.getAddress();
+
+    document.getElementById("wallet").innerText = user;
+
+    loadBalance();
+}
+
+async function loadBalance() {
+    if (!tokenAddress) return;
+
+    try {
+        const contract = new ethers.Contract(tokenAddress, tokenABI, provider);
+        const bal = await contract.balanceOf(user);
+        document.getElementById("balance").innerText =
+            ethers.utils.formatEther(bal);
+    } catch (e) {
+        console.log("Balance error", e);
+    }
+}
+
+async function claim() {
+    if (!faucetAddress) {
+        alert("Faucet not set yet");
+        return;
+    }
+
+    const abi = ["function claim()"];
+    const contract = new ethers.Contract(faucetAddress, abi, signer);
+
+    await contract.claim();
+}
+
+async function stake() {
+    if (!stakingAddress) {
+        alert("Staking not set yet");
+        return;
+    }
+
+    const amount = document.getElementById("amount").value;
+
+    const abi = ["function stake(uint256)"];
+    const contract = new ethers.Contract(stakingAddress, abi, signer);
+
+    const parsed = ethers.utils.parseEther(amount);
+    await contract.stake(parsed);
+}
+
+function buy() {
+    if (!tokenAddress) {
+        alert("Token not deployed yet");
+        return;
+    }
+
+    window.open(
+        "https://app.uniswap.org/#/swap?outputCurrency=" + tokenAddress,
+        "_blank"
+    );
+}
+</script>
+
+</body>
+</html>
